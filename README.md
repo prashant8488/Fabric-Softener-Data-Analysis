@@ -74,10 +74,26 @@ All intercept coefficients of the brands are negative i.e. log odds of preferrin
 All intercept coefficients of the brands are positive i.e. log odds of preferring other brand over ARM increases by exponent of coefficient value.
 > mlogit.model2 <- mlogit(Brand ~ 1 data=mldata, reflevel="ARM")
 
-###$ Cheapest Brand – CLF
+#### Cheapest Brand – CLF
 The price coefficient of all other brand price is positive in reference to CLF. With every one unit increase in variable of price the log odd of selecting other brands increase over CLF. Hence, people prefer other brands over CLF
 > mlogit.model4 <- mlogit(Brand ~ 1 | Price, data = mldata, reflevel="CLF")
 
 #### Most Expensive Brand - SNG
 The price coefficient of all other brand price is negative in reference to SNG. With every one unit increase in variable of price the log odd of selecting other brands decreases over SNG. Hence, people start preferring SNG
 
+### Forecasting customer preferences based on the SKU
+- To forecast customer preference of brands for the Fabric Softener, we build multinomial Logistic regression models. There were 3 functions available in R to perform this task i.e. Mlogit, VGLM with family=multinomial and Multinorm function. 
+- VGLM function provided more detail that other function and so we used it to figure out which independent variables are more significant than the others. This was concluded by interpreting the p-value which is listed beside each variable.
+
+##### Models:
+Using Multinorm function, we developed a normal keeping BRAND as the dependent variable and SKU as the independent variable. DWN was used as reference brand.
+> test_model1 <- multinom(traindata$Brand2 ~ SKU, data = traindata)
+
+Running the prediction model on the validate data set, could help us see how well the model is making prediction. It was observed that model is making prediction with 100% accuracy.
+- To confirming the above model, we ran the prediction model on forecast dataset and could identify which brand customer would have bought. It is to be noted that BRAND column was deleted from the forecast dataset before performing this operation. Following is the image which shows 0.9981 probability for PRL brand to be bought by customer.
+
+##### Results:
+1. From VGLM model, we could conclude that SKU is a significant independent variable to predict BRAND and IRIWeek and HHId are insignificant variables
+2. Using Multinorm function, we could predict the BRAND bought by customer with 100% accuracy.
+
+###
