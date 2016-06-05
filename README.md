@@ -2,9 +2,10 @@
 Analyse the customer trends based on Stock keeping Unit of fabric softner products. The SKU is an identification number of a particular product and tells about different attributes of that product. Most Consumer choice models in marketing make use of ‘Brand’ as the fundamental unit of analysis, however many of the decisions made by the consumers, manufacturers, and retailers occur at the level of stock keeping unit. Hence it is important to consider the SKU attributes to better understand consumer trends.
 
 ## Overview of Dataset
-1.	D1PUR.DAT: This file contains the household purchase history data. It contains household ID for purchase and trip information. The trip info variable is in AAABBBCCC format where
+1.	D1PUR.DAT: This file contains the household purchase history data. It contains household ID for purchase and trip information. 
 
-> AAA = IRI week
+> The trip info variable is in AAABBBCCC format where:
+-AAA = IRI week
 - BBB = store#
 - CCC = SKU# purchased.
 
@@ -35,7 +36,7 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 - The same task was performed for SIZE, FORMULA and FORM also
 
 4-	Data was further split into training, calibration and forecast weeks.
->	Training week from IRIWeek 592 to IRIWeek 641
+>-	Training week from IRIWeek 592 to IRIWeek 641
 -	Calibration week from IRIWeek 642 to IRIWeek 643
 -	Forecast weeks from IRIWeek 644 to IRIWeek 669
 
