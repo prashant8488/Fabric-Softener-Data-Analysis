@@ -1,0 +1,402 @@
+# Data Cleaning
+purdata<-read.table("D1PUR.DAT")
+purdata$IRIWeek<-substring(purdata$V2,1,3)
+purdata$Store<-as.numeric(substring(purdata$V2,4,6))
+purdata$SKU<-as.numeric(substring(purdata$V2,7,9))
+purdata<-purdata[,c("V1","IRIWeek", "Store", "SKU")]
+names(purdata)<-c("HHId","IRIWeek","Store","SKU")
+merchdata<-read.table("MERCH.DAT")
+
+for(i in 1:length(merchdata$V5))
+ {
+if(nchar(merchdata[i,"V5"])<6)
+{
+ZeroString<-character()
+for(j in 1:(6-nchar(merchdata[i,"V5"]))) 
+{
+ZeroString<-paste(ZeroString,0,sep='')
+ } 
+merchdata[i,"V5"]<-paste(ZeroString,merchdata[i,"V5"],sep='') 
+}}
+
+merchdata$Price<-as.numeric(substring(merchdata$V5,1,3))
+merchdata$Display<-as.numeric(substring(merchdata$V5,5,5))
+merchdata$Feature<-as.numeric(substring(merchdata$V5,6,6))
+merchdata$Price<-merchdata$Price/100
+merchdata<-merchdata[,-5]
+merchdata<-merchdata[,c("V1","V2","V3","V4","Price","Display","Feature")]
+names(merchdata)<-c("SKU","Store","IRIWeek","PricePaid","RegPrice","Display","Feature")
+merchdata$IRIWeek<-as.numeric(merchdata$IRIWeek)
+purplusmerch <- merge(purdata, merchdata, by=c("IRIWeek", "Store","SKU"))
+attrdata<-read.csv("Membership panel Data.csv")
+attrdata<-attrdata[,-1]
+attrplusmerch <- merge(purplusmerch, attrdata, by=c("SKU"))
+arspdata<-read.table("ARSP.DAT")
+names(arspdata)<-c("SKU","Store","ARSP")
+finaldata <- merge(attrplusmerch, arspdata, by=c("SKU","Store"))
+finaldata<-finaldata[,c("HHId","SKU","IRIWeek","ARM","BNC","CLF","DWN","FNT","GEN","PRL","SNG","STP","TSN","B","F","L","S","LT","RG","ST","UN","LR","MD","SM","XL","PricePaid","RegPrice","ARSP","Display","Feature")]
+finaldata$PriceCut<-finaldata$RegPrice-finaldata$PricePaid
+finaldata<-finaldata[,c("HHId","SKU","IRIWeek","ARM","BNC","CLF","DWN","FNT","GEN","PRL","SNG","STP","TSN","B","F","L","S","LT","RG","ST","UN","LR","MD","SM","XL","RegPrice","PriceCut","ARSP","Display","Feature")]
+names(finaldata)<-c("HHId","SKU","IRIWeek","ARM","BNC","CLF","DWN","FNT","GEN","PRL","SNG","STP","TSN","B","F","L","S","LT","RG","ST","UN","LR","MD","SM","XL","Price","PriceCut","AveragePrice","Display","Feature")
+write.csv(finaldata,”finalized_data.csv",row.names=FALSE)
+
+#Brand Analysis using Mlogit function
+#Multinomial Logistic Regression Model using mlogit  
+install.packages("mlogit")
+library(mlogit)
+
+#The training file been used here contains the data from Final data file created after Data cleaning only for IRIWeeks 592-641.
+traindata<-read.csv("Final_Data_Training.csv")
+attach(traindata)
+
+#Descriptive statistics of Brand Variable. There are 10 Different Brands with corresponding purchase rows in Training Dataset
+table(Brand)
+
+#Reshaping the data from wide to long format
+traindata$Brand<-as.factor(traindata$Brand)
+mldata<-mlogit.data(traindata, varying=13:22, choice="Brand", shape="wide")
+mldata[1:25,]
+
+# Multinomial logit model coefficients 
+#MOST SELLING BRAND - DWN - All intercept coefficients of the brands are negative i.e. log odds of preferring other brand over DWN decreases by exponent of coefficient value.
+mlogit.model1 <- mlogit(Brand ~ 1 data=mldata, reflevel="DWN")
+summary(mlogit.model1)
+exp(coef(mlogit.model1))
+#Brand and IRIWeek are the only two attributes that are highly correlated because for other predictor values like HHId,Form,Formula2,Size,etc. the p-value was not significant (>0.05)
+
+#WORST SELLING BRAND - ARM - All intercept coefficients of the brands are positive i.e. log odds of preferring other brand over ARM increases by exponent of coefficient value.
+mlogit.model2 <- mlogit(Brand ~ 1 data=mldata, reflevel="ARM")
+summary(mlogit.model2)
+exp(coef(mlogit.model2))
+
+# Multinomial logit model coefficients (with different base outcome)
+#SNG is the most valuable brand in terms of Price since the price coefficient of all other brand price is negative in reference to SNG. With every one unit increase in variable of price the log odd of selecting other brands decreases over SNG. Hence, people start preferring SNG.
+mlogit.model3 <- mlogit(Brand ~ 1 | Price, data = mldata, reflevel="SNG")
+summary(mlogit.model3)
+exp(coef(mlogit.model3))
+
+#CLF is the least valuable brand in terms of Price since the price coefficient of all other brand price is positive in reference to CLF. With every one unit increase in variable of price the log odd of selecting other brands increase over SNG. Hence, people prefer other brands over SNG
+mlogit.model4 <- mlogit(Brand ~ 1 | Price, data = mldata, reflevel="CLF")
+summary(mlogit.model4)
+exp(coef(mlogit.model4))
+
+#using multinorm function - Forecast the BRAND preferred by the customer using SKUs AS independent variable 
+
+require(foreign)
+require(nnet)
+traindata<-read.csv("Final_Data_Training.csv", header = TRUE)
+traindata$Brand2 <- relevel(traindata$Brand, ref = "DWN")
+
+#DWN brand is kept at a reference level
+train_model1 <- multinom(traindata$Brand2 ~ SKU, data = traindata)
+summary(train_model1)
+z <- summary(train_model1)$coefficients/summary(train_model1)$standard.errors
+
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+
+# Z-value and P-value is listed by a separate formula as multinorm doesn’t explicitely displays these values.
+exp(coef(train_model1))
+head(pp <- fitted(train_model1))
+validate_data<-read.csv("Final_Data_Validation.csv")
+head(predict(train_model1, newdata = validate_data, "probs"))
+
+# Gives prediction probabilities on the validate data. From here we can validate the accuracy of the model.
+forecast_data<-read.csv("Final_Data_Forecast.csv")
+
+Brandpred_value <- data.frame(predict(test_model1, newdata = forecast_data, "probs"))
+Brand_predicat <- cbind(forecast_data,Brandpred_value)
+View(Brand_predicat)
+
+#To check for the ACCURACY(Lets keep the cut off probability as 0.9)
+cut.off <- 0.9
+pred.brand <- (Brandpred_value > cut.off)
+#No of purchase rows for Brand "PRL" with probability higher than 0.9 are 350 which is true if we see from the file directly.
+table(Brand_predicat$PRL) 
+table(forecast_data$Brand)
+#Similarly for Brand "DWN" are 452 which is also true.
+table(Brand_predicat$DWN)
+#Hence our multinom logistic regression model is highly accurate.
+
+# analyzing Dependency of SKU on its attributes
+# A linear model with SKU as dependent and other variables FORMULA2, FORM, SIZE and BRAND as independent.
+
+Lmod1 <- lm(SKU~Formula2 + Form + Size + Brand )
+summary(Lmod1)
+
+#The model explains 99.81% of the variance in the SKU by those variables. Also the adjusted R2 was exactly same, which signifies there is no interaction and no over-fitting among the independent variable.
+
+#analyzing dependency of Price on its attributes
+# A Linear model with Price as dependent and all other variable signifies that variance of the price is explained by all the environment variables. Every manufactures variable will effect the price of the product.
+
+Lmod2 <- lm(Price~Brand+Size+Form+Formula2+Display+Feature)
+summary(Lmod2)
+
+# analyzing Loyalty of customers based on Brand
+  forecastdata<-read.csv("Final_Data_Forecast.csv")
+
+  plot(Loyalty~SKU)
+  
+  loyal<-as.data.frame(table(SKU, Loyalty))
+  loyal
+#To plot graph for loyal customer, we have to take count from 58-114 row of the above table "loyal"
+  plot(loyal$SKU[58:114],loyal$Freq[58:114], main="Loyalty of Customer towards SKU", xlab="SKUs", ylab="No. of Loyal Customers")
+  lines(loyal$SKU[58:114],loyal$Freq[58:114], type="l", col="red")
+
+#VGLM Multinomial Logistic Regression Model – To check for the significance of various predictor variables.
+install.packages("VGAM")
+library(VGAM)
+traindata<-read.csv("Final_Data_Training.csv")
+class(SKU)
+SKU <- as.factor(SKU)
+
+#Using vglm function model to predict the significant independent variables
+vglm_mod1=vglm(cbind(B.ARM,B.BNC,B.CLF,B.FNT,B.GEN,B.PRL,B.SNG,B.STP,B.TSN,B.DWN)~SKU+IRIWeek+HHId, data=traindata, family=multinomial)
+summary(vglm_mod1)
+exp(coefficients(vglm_mod1))
+
+#Using vglm function model to predict if Price attribute is dependent on Brand
+vglm_mod2=vglm(cbind(B.ARM,B.BNC,B.CLF,B.FNT,B.GEN,B.PRL,B.SNG,B.STP,B.TSN,B.DWN)~Price, data=traindata, family=multinomial)
+summary(vglm_mod2)
+exp(coefficients(vglm_mod2))
+
+
+# Visualization
+1.	Sale of Product according to Size –
+#-------------Sale of product according to size-----------------------
+       with(finaldata, table(finaldata$Brand,finaldata$Size))
+       mydata<-read.csv("Final_Data_Calibration_Training.csv", header = TRUE)
+       mydata_size<-table(mydata$Brand,mydata$Size)
+       table(mydata_size)
+       barplot(mydata_size, legend = rownames(mydata_size), pch = c(1,10), ylim=c(0,2500),col = c("brown", "blue", "green", "red", "yellow","purple", "pink", "orange", "grey", "light blue"), xlab = "Size" , ylab = "Quantity", main =  "Brand-Size-Quantity Depiction")
+       args.legend = list(title = "SES", x = "topright", cex = .7)
+       barplot(mydata_size, legend = rownames(mydata_size), args.legend = list(title = "BRANDS", x = "topright"), ylim=c(0,2500),col = c("brown", "blue", "green", "red", "yellow","purple", "pink", "orange", "grey", "light blue"), xlab = "Size" , ylab = "Quantity", main =  "Brand-Size-Quantity Depiction")
+2.	Number of SKUs per Brand –
+       #-----------No of SKUs per Brand------------------------------
+       mydata_SKU<-as.data.frame.matrix(table(mydata$Brand,mydata$SKU))
+       barplot(apply(mydata_SKU,1,sum),xlab="Brand",ylab="Quantity of SKUs", main = "Number of SKUs per Brand", col="red")
+
+3.	Sale of products according to Formula:
+
+table1<-table(Brand,Formula2)
+barplot(table1, pch = c(1,10), ylim=c(0,3500),col = c("cyan", "blue", "green", "red", "yellow","purple", "pink", "orange", "grey", "light blue"), xlab = "Formula" , ylab = "Quantity", main =  "Brand-Formula-Quantity Depiction")
+legend("topright", legend = row.names(table1), fill = 1:6, ncol = 2, cex = 0.75)
+
+4.	Number of SKUs Per Brand for the calibration dataset
+
+calibdata_SKU<-as.data.frame.matrix(table(calibdata$Brand,calibdata$SKU))
+barplot(apply(calibdata_SKU,1,sum),xlab="Brand",ylab="Quantity of SKUs", main = "Number of SKUs per Brand for Calibration dataset", col="red")
+
+# Logistic regression – to predict the sale(HIGH/LOW) for the ordinal values using threshold of $2.6 per transaction during IRIWeeks(592-641) as the sale target. Based on the same logic, we tried to predict the forecasted value on forecast data(IRIWeeks 644-669) with an accuracy of 68.97.
+	class(SKU)
+       #######logistic model data#######
+	#for loop for checking logistic model on weekly spent
+       for (i in 1:nrow(finaldata)){
+         if(finaldata$avg_price_value[i] <= 2.6){
+           finaldata$Spending[i] <- "0" }
+         else if(finaldata$avg_price_value[i] > 2.6){
+           finaldata$Spending[i] <- "1" 
+         }
+       
+
+       SKU <- as.factor(SKU)
+       mod1 <- glm(Spending ~ AveragePrice+PriceCut,family = binomial);
+       summary(mod1);
+       exp(0.91384)
+       #For every unit increase in PriceCut,The odds of High Spending increase by 	exp(0.91384)=2.493881.
+       
+       
+       test.data <- read.csv("Spam-Test.csv");
+       pred.prob <- predict.glm(mod1,finaldata,type="response");
+       summary(pred.prob)
+       cut.off <- 0.5;
+       pred.spending <- (pred.prob > cut.off);
+       table(pred.spending);
+       #tablewise classification
+       table(finaldata$Spending,as.numeric(pred.spending))
+       table(finaldata$Spending)
+       (1193+281)/(1193+364+299+281)
+       
+       finaldata <- cbind(finaldata,predict.glm(mod1,finaldata,type="response"))
+       names(finaldata)
+
+# Linear Regression Model – evaluations of the importance of pricing and promotions
+  detach(finaldata)
+       setwd("E:\\MBA\\GMAT\\SKM_MS-MIS_Docs\\USF\\MIS\\SDM\\Final Project")
+       finaldata<-read.csv("Final_Data_Calibration_Training.csv")
+       finaldata<-read.csv("finalized_data_Latest.csv")
+       dim(finaldata)
+       names(finaldata);
+       attach(finaldata)
+       
+       #Below for loop for Training Dataset
+       for (j in 1:nrow(finaldata)){
+         for(i in 592:641) {
+           if(i %in% IRIWeek[j]){
+             finaldata$Total_price[j] <- sum(finaldata[which(IRIWeek == i),c("Price")])
+           }
+         }}
+       
+       #evaluations of the importance of pricing and promotions
+       attach(finaldata)
+       names(finaldata)
+       hist(Total_price)
+       Lmod1 <- lm(IRIWeek~ Brand*Price+log(SKU)+Form+Total_price+Size*Feature+Display)
+       summary(Lmod1)
+       
+       plot(IRIWeek~Total_price)
+       
+       Lmod2 <- lm(Price~Brand+SKU+Size)
+       summary(Lmod2)
+       
+       Lmod3 <- lm(PriceCut~Brand+Size+Display)
+       summary(Lmod3)
+       
+       #evaluations of the importance of the different attributes for each SKU (to this aim, you may have to code the attributes with an appropriate set of dummies).
+       detach(finaldata)
+       rm(finaldata)
+       
+       finaldata<-read.csv("finalized_data_Latest.csv")
+       dim(finaldata)
+       names(finaldata);
+       attach(finaldata)
+       
+       Lmod4 <- lm(SKU~Formula2+Form+Size+Brand)
+       summary(Lmod4)
+       #R2 is 99.81 % means SKU is combination of these features and there is no interaction among them.
+
+  #Time Series between IRIWeek and Total_Price Sales
+         
+         ## TIME SERIES CODE 
+         
+         mydata<-read.csv("Final_Data_Calibration_Training.csv", header = TRUE)
+       attach(mydata)
+       for(j in 1:nrow(mydata)){
+         for(i in 592:641) {
+           if(i %in% IRIWeek[j]){
+             mydata$Total_price[j] <- sum(mydata[which(IRIWeek == i),c("Price")])
+           }
+         }}
+       
+       writedata <- mydata[,c("IRIWeek","Total_price")]
+       
+       duplicates = duplicated(IRIWeek,Total_price)
+       duplicates[1:10]
+       unique_writedata <- writedata[!duplicated(writedata[c("IRIWeek","Total_price")]),]
+       sorted_writedata <- unique_writedata[order(unique_writedata$IRIWeek),]
+       
+       write.csv(sorted_writedata,"test.csv")
+       ts<-read.csv("test.csv", header=TRUE)
+       attach(ts)
+       Time_Model<- ts(ts, frequency=52)
+       Time_Model
+       plot.ts(Time_Model,col="purple")
+       
+       data <- read.csv("Enrollments.csv");attach(data);names(data);
+       IRIWeek    <- IRIWeek[2:49];
+       IRIWeek.l1 <- IRIWeek[1:48];
+       Total_price    <- Total_price[2:49];
+       View(ts)
+       mod3 <- lm(IRIWeek~IRIWeek.l1);
+       summary(mod3);
+       
+       
+       #plotting smoothing splines with different smoothing parameters
+       ##note: the parameter "spar" sets the smoothness
+       par(mfrow=c(1,1))
+       plot(Total_price, IRIWeek, xlab="Total_price", ylab="IRIWeek",lwd=2);
+       sm1 <- smooth.spline(Total_price, IRIWeek, spar=0.2);
+       sm2 <- smooth.spline(Total_price, IRIWeek, spar=1);
+       x.pred <- seq(0,25000);
+       sm1.pred <- predict(sm1,x.pred)$y;
+       sm2.pred <- predict(sm2,x.pred)$y;
+       lines(x.pred,sm1.pred, lwd=2,lty=2,col="red")
+       lines(x.pred,sm2.pred, lwd=2,lty=2,col="blue")
+       
+       
+       #Time Series - MA model
+       
+       #Training Dataset
+       detach(finaldata)
+       rm(finaldata)
+       traindata<-read.csv("Final_Data_Calibration_Training.csv")
+       dim(traindata)
+       names(traindata);
+       attach(traindata)
+       
+       #Below for loop for Training Dataset
+       for (j in 1:nrow(traindata)){
+         for(i in 592:641) {
+           if(i %in% IRIWeek[j]){
+             traindata$Total_price[j] <- sum(traindata[which(IRIWeek == i),c("Price")])
+           }
+         }}
+       
+       attach(traindata)
+       
+       duplicates = duplicated(IRIWeek,Total_price)
+       duplicates[1:10]
+       unique_traindata <- traindata[!duplicated(traindata[c("IRIWeek","Total_price")]),]
+       sorted_traindata <- unique_traindata[order(unique_traindata$IRIWeek),]
+       
+       install.packages("tseries")
+       library(tseries)
+       library(xts)
+       install.packages("forecast")
+       library(forecast)
+       install.packages("TTR")
+       library("TTR")
+       library(ggplot2)
+       sales.ts<-ts(sorted_traindata$Total_price,frequency = 52, start=c(1991,1))
+       plot.ts(sales.ts)
+       
+       # Descriptive statistics and plotting the data
+       summary(sorted_traindata$Total_price)
+       
+       # Dickey-Fuller test for variable
+       adf.test(sorted_traindata$Total_price, alternative="stationary", k=0)
+       #p-value is 0.01 i.e. H0 is rejected and hence alternate hypothesis holds true. This means the data is stationary and hence requires MA(Moving Average) model for analysis.
+       adf.test(sorted_traindata$Total_price, alternative="explosive", k=0)
+       #p-value is 0.01 i.e. H0 failed to reject and hence Null hypothesis holds true. This means the data is not explosive and hence requires MA(Moving Average) model for analysis.
+       
+       plot(acf(sorted_traindata$Total_price), main="ACF for Stationary Data") #One Significant partial correlation is there. Which suggests MA(1) model
+       plot(pacf(sorted_traindata$Total_price), main="PACF for Stationary Data") # nothing is significant
+       
+       arima(sorted_traindata$Total_price, order = c(0,0,1))
+       arima001 <- arima(sorted_traindata$Total_price, order = c(0,0,1))
+       arimapred1 <- forecast.Arima(arima001, h=10)
+       arimapred1
+       
+       plot.forecast(arimapred1, main = "Forecast using MA(1) Model", xlab="IRIWeeks", ylab="Weekly Sales")
+       # Since the data provided is only for 1 year, we could not figure out the seasonality nor could we see the trend and hence
+       # we can conclude that this model is cyclic.Due to which it becomes difficult to forecast data with higher accuracy.
+       
+       #working Code and file below
+       detach(foredata)
+       rm(foredata)
+       
+       foredata<-read.csv("Final_Data_Forecast_Backup_Sorted.csv")
+       dim(foredata)
+       names(foredata);
+       attach(foredata)
+       
+       #Below for loop for Forecast Dataset
+       for (j in 1:nrow(foredata)){
+         for(i in 644:669) {
+           if(i %in% IRIWeek[j]){
+             foredata$Total_price[j] <- sum(foredata[which(IRIWeek == i),c("Price")])
+           }
+         }}
+       
+       attach(foredata)
+       
+       duplicates = duplicated(IRIWeek,Total_price)
+       duplicates[1:10]
+       unique_foredata <- foredata[!duplicated(foredata[c("IRIWeek","Total_price")]),]
+       sorted_foredata <- unique_foredata[order(unique_foredata$IRIWeek),]
+       
+       
+       newsales.ts<-ts(sorted_foredata$Total_price,frequency = 52, start=c(1992,1))
+       plot.ts(newsales.ts)
+       
+       forecast_ts <- ts(plot.forecast(arimapred1, main = "Forecast using MA(1) Model", xlab="IRIWeeks", ylab="Weekly Sales"))
+	ts.plot(sales.ts ,newsales.ts, parallel=TRUE, gpars = list(col = c("black","red")))
