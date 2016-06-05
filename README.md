@@ -66,19 +66,19 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 ## Data Analysis
 #### Brand Analysis
 We performed the brand analysis using multinomial logistic regression
-#### Most Selling brand – DWN
+##### Most Selling brand – DWN
 All intercept coefficients of the brands are negative i.e. log odds of preferring other brand over DWN decreases by exponent of coefficient value.
 > mlogit.model1 <- mlogit(Brand ~ 1 , data=mldata, reflevel="DWN")
 
-#### Worst selling brand – ARM
+##### Worst selling brand – ARM
 All intercept coefficients of the brands are positive i.e. log odds of preferring other brand over ARM increases by exponent of coefficient value.
 > mlogit.model2 <- mlogit(Brand ~ 1 data=mldata, reflevel="ARM")
 
-#### Cheapest Brand – CLF
+##### Cheapest Brand – CLF
 The price coefficient of all other brand price is positive in reference to CLF. With every one unit increase in variable of price the log odd of selecting other brands increase over CLF. Hence, people prefer other brands over CLF
 > mlogit.model4 <- mlogit(Brand ~ 1 | Price, data = mldata, reflevel="CLF")
 
-#### Most Expensive Brand - SNG
+##### Most Expensive Brand - SNG
 The price coefficient of all other brand price is negative in reference to SNG. With every one unit increase in variable of price the log odd of selecting other brands decreases over SNG. Hence, people start preferring SNG
 
 ### Forecasting customer preferences based on the SKU
@@ -96,4 +96,34 @@ Running the prediction model on the validate data set, could help us see how wel
 1. From VGLM model, we could conclude that SKU is a significant independent variable to predict BRAND and IRIWeek and HHId are insignificant variables
 2. Using Multinorm function, we could predict the BRAND bought by customer with 100% accuracy.
 
-###
+### Analysing dependency on SKU attributes
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/sku%20dependency.jpg">
+<br>
+
+- A linear regression model was build keeping SKU as the dependent variable and other variables as independent. Starting with Kitchen Sink model, we gradually started removing variables which weren’t  explaining much about the attributes
+- We concluded that SKU can be explaned with the help of variance in FORMULA2, FORM, SIZE and BRAND. 
+- We can observe that Multiple R-squared is 99.82% and Adjusted R-squared is also 99.82%. This signifies there is no over-fitting and no interaction occurring between the variables.
+
+### Analyzing dependency of Price on manufacturer variables
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Price%20manuf%20depend.jpg">
+<br>
+- A linear regression mode build keeping PRICE as dependent variable and other variables as independent. We started with Kitchen Sink model gradually removed the one which seem to have caused interaction i.e SKU. We could achieve a model which explains PRICE upto 87.27%. Variables BRAND, FORM, FORMULA2, SIZE, DISPLAY and FEATURE explains the maximum variance in the PRICE variable.
+So, we can conclude that Price of the product actually depends on manufacturing variable.
+
+### Analyzing Loyalty of customer towards brand 
+- Assumption: In the forecast dataset, a new column named loyalty was created which has 0 and 1 on the basis whether customer has opted for same SKU in the past i.e. test dataset. If it does then the customer is loyal else it is not.
+- Data Preparation: To perform this activity, we performed few operations in MS Excel using VLOOKUP formula and then did analysis.  
+- Analysis: Below line plot explains the number of loyal customers for each SKU. We can observe that 2 SKU’s have the maximum number of loyal customers. 
+
+> SKU 62 (Brand FNT, Form B, Formula2 RG, Size MD)
+  SKU 44 (Brand DWN, Form F, Formula2 RG, Size SM)
+
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Screen%20Shot%202015-11-19%20at%206.25.37%20PM.png">
+<br>
+### Forecast Sales using moving average (1) model
+
+
+
+
