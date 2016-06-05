@@ -43,4 +43,6 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 ## Visualization
 
 1. Total number of products of each brand with different sizes. As we can see from the below graph that medium size sells the most, whereas XL sells least. Also we can observe that for brand DWN small size products are selling more whereas for brand SNG medium size products sell more.
-
+<br>
+<img src="Fabric-Softener-Data-Analysis-/images/Brand-Size_Quantity.jpeg">
+<br>
