@@ -64,11 +64,20 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 <br>
 
 ## Data Analysis
-### Brand Analysis
+#### Brand Analysis
 We performed the brand analysis using multinomial logistic regression
-### Most Selling brand – DWN
-### Worst selling brand – ARM
-### Cheapest Brand – CLF
+#### Most Selling brand – DWN
+All intercept coefficients of the brands are negative i.e. log odds of preferring other brand over DWN decreases by exponent of coefficient value.
+> mlogit.model1 <- mlogit(Brand ~ 1 , data=mldata, reflevel="DWN")
+
+#### Worst selling brand – ARM
+All intercept coefficients of the brands are positive i.e. log odds of preferring other brand over ARM increases by exponent of coefficient value.
+> mlogit.model2 <- mlogit(Brand ~ 1 data=mldata, reflevel="ARM")
+
+###$ Cheapest Brand – CLF
 The price coefficient of all other brand price is positive in reference to CLF. With every one unit increase in variable of price the log odd of selecting other brands increase over CLF. Hence, people prefer other brands over CLF
-### Most Expensive Brand - SNG
+> mlogit.model4 <- mlogit(Brand ~ 1 | Price, data = mldata, reflevel="CLF")
+
+#### Most Expensive Brand - SNG
 The price coefficient of all other brand price is negative in reference to SNG. With every one unit increase in variable of price the log odd of selecting other brands decreases over SNG. Hence, people start preferring SNG
+
