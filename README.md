@@ -46,3 +46,19 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 <br>
 <img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Brand-Size_Quantity.jpeg">
 <br>
+2. The below figure shows the total number of SKU per brand. This can be interpreted as the number of items sold by a brand. We can observe that DWN and SNG are the most selling brands, whereas ARM is the least selling brand.	
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/No.%20of%20SKUs%20per%20Brand.jpeg">
+<br>
+3. The below line graph explains the number of customer buying fabric softener per week. We can observe that week number 607 and 635 has high number of customer visits. Looking at the IRIweek data we find that these weeks were in the month of April and November respectively.
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Nofcust.jpeg">
+<br>
+4. The below figure shows the formula used by different Fabric softner Brands. The X-axis represents the Formula and Y-axix the the product quantities using that formula. We can observe that maxumum number of brands use the formula RG. From the data It can also be interpreted as more customers prefer products with formula RG.
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/brand-formula.jpeg">
+<br>
+5. The below graph shows the weekly sales of the fabric softener. We can observe that week 16 has the maximum sales i.e. $550 approx. Also the average weekly sale hover around $200.
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Screen%20Shot%202015-11-18%20at%209.00.52%20PM.png">
+<br>
