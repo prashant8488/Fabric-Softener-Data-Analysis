@@ -5,7 +5,7 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 1.	D1PUR.DAT: This file contains the household purchase history data. It contains household ID for purchase and trip information. 
 
 > The trip info variable is in AAABBBCCC format where:
--AAA = IRI week
+- AAA = IRI week
 - BBB = store#
 - CCC = SKU# purchased.
 
@@ -40,4 +40,7 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 -	Calibration week from IRIWeek 642 to IRIWeek 643
 -	Forecast weeks from IRIWeek 644 to IRIWeek 669
 
+## Visualization
+
+1. Total number of products of each brand with different sizes. As we can see from the below graph that medium size sells the most, whereas XL sells least. Also we can observe that for brand DWN small size products are selling more whereas for brand SNG medium size products sell more.
 
