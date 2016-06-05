@@ -62,3 +62,13 @@ Analyse the customer trends based on Stock keeping Unit of fabric softner produc
 <br>
 <img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Screen%20Shot%202015-11-18%20at%209.00.52%20PM.png">
 <br>
+
+## Data Analysis
+### Brand Analysis
+We performed the brand analysis using multinomial logistic regression
+### Most Selling brand – DWN
+### Worst selling brand – ARM
+### Cheapest Brand – CLF
+The price coefficient of all other brand price is positive in reference to CLF. With every one unit increase in variable of price the log odd of selecting other brands increase over CLF. Hence, people prefer other brands over CLF
+### Most Expensive Brand - SNG
+The price coefficient of all other brand price is negative in reference to SNG. With every one unit increase in variable of price the log odd of selecting other brands decreases over SNG. Hence, people start preferring SNG
