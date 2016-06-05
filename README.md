@@ -124,6 +124,19 @@ So, we can conclude that Price of the product actually depends on manufacturing 
 <br>
 ### Forecast Sales using moving average (1) model
 
+- A new column containing the sum of total_price on a weekly basis was created in the test dataset. Using unique and sorted entries time series plot was created. 
+- Using Dickey-Fuller test we could see that p-value is very small for the null hypothesis of time series being non-stationary, and hence we could reject it and concluded that time series graph over 1 year is Stationary. 
+- Autocorrelation function (ACF) gave us a single significant point and partial auto-correlation function (PACF) has nothing significant. This help us conclude that Moving Average (1) needs to be executed.
+- Using Arima function we gave c(0,0,1) as a parameter and we could achieve a Moving Average (1) model, which was used for forecast on the forecast dataset. 
+<br>
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Screen%20Shot%202015-11-22%20at%202.43.33%20AM.png">
+<br>
+- Above image gives us the 80% and 95% confidence interval over which our future sales would exist. This prediction was done for next 10 weeks by giving a parameter to forecast.arima.
 
+<img src="https://github.com/prashant8488/Fabric-Softener-Data-Analysis-/blob/master/images/Forecast%20data%20in%20time%20series.JPG">
+<br>
+- The graph in BLACK is the sales from the training data and graph in RED is the sales from the forecast data set. We compared the actual forecasted sales data and the range over which MA model forecasted it. The X-axis is marked on half yearly basis.  
 
+## Conclusion
+We could conclude by saying that although BRAND was the most important parameter in our model for predicting customer behavior, but the SKU attributes could not be simply ignored as they give more details of customer behavior when included in the model. From the Fabric Softener data we could say that BRAND, SIZE, FORMULA and FORM were significant attributes during modeling. 
 
